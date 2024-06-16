@@ -29,35 +29,104 @@ const getItems = (count) =>
     content: `item ${k}`,
   }));
 
-const reorder = (list, startIndex, endIndex) => {
-  const result = Array.from(list);
-  const [removed] = result.splice(startIndex, 1);
-  result.splice(endIndex, 0, removed);
-  return result;
-};
 const DragDropList = ({ initialItems, droppableId, title }) => {
-  console.log("initialItems", title);
+  // 아이템의 목록 상태
   const [items, setItems] = useState(initialItems);
+  // 선택된 아이템의 id
+  const [selectedItems, setSelectedItems] = useState([]);
+  // 마지막으로 선택된 아이템의 인덱스
+  const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
 
+  // 드래그를 놓으면 호출됨
   const onDragEnd = useCallback(
     (result) => {
       if (!result.destination) {
         return;
       }
+      const destinationIndex = result.destination.index;
 
-      const newItems = reorder(
-        items,
-        result.source.index,
-        result.destination.index
+      const selectedIndices = selectedItems
+        .map((id) => items.findIndex((item) => item.id === id))
+        .sort((a, b) => a - b);
+
+      const movingItems = selectedIndices.map((index) => items[index]);
+
+      const newItems = items.filter(
+        (_, index) => !selectedIndices.includes(index)
       );
 
+      newItems.splice(destinationIndex, 0, ...movingItems);
       setItems(newItems);
     },
-    [items]
+    [items, selectedItems]
   );
 
+  // 아이템 선택 함수
+  const selectionHandler = useCallback(
+    (itemId) => {
+      const index = selectedItems.indexOf(itemId);
+      if (index === -1) {
+        //선택안되어있을때는 선택하고
+        setSelectedItems([itemId]);
+      } else {
+        // 그게 아니면 해제함
+        setSelectedItems([]);
+      }
+      // 마지막에 선택된 아이템의 인덱스
+      setLastSelectedIndex(items.findIndex((item) => item.id === itemId));
+    },
+    [selectedItems, items]
+  );
+
+  // ctrl이나 cmd로 아이템 다중 선택
+  const selectionGroupHandler = useCallback(
+    (itemId) => {
+      const index = selectedItems.indexOf(itemId);
+      if (index === -1) {
+        //선택안되어있을때는 선택하고
+        setSelectedItems([...selectedItems, itemId]);
+      } else {
+        // 그게 아니면 해제함
+        setSelectedItems(selectedItems.filter((id) => id !== itemId));
+      }
+      // 마지막에 선택된 아이템의 인덱스
+      setLastSelectedIndex(items.findIndex((item) => item.id === itemId));
+    },
+    [selectedItems, items]
+  );
+
+  // shift키를 사용해서 범위내 선택
+  const selectionMultiHandler = useCallback(
+    (newItemId) => {
+      const newItemIndex = items.findIndex((item) => item.id === newItemId);
+      const start = Math.min(lastSelectedIndex, newItemIndex);
+      const end = Math.max(lastSelectedIndex, newItemIndex);
+
+      // 시작 인덱스와 끝 인덱스 사이의 모든 아이템 선택
+      const newSelectedItems = items
+        .slice(start, end + 1)
+        .map((item) => item.id);
+
+      setSelectedItems(newSelectedItems);
+      // setItems(newSelectedItems);
+    },
+    [items, lastSelectedIndex]
+  );
+
+  // 드래그시작할때
+  const onBeforeDragStart = (start) => {
+    //드래그를 시작할때 item의 정보
+    const selectedItem = items[start.source.index];
+    if (!selectedItems.includes(selectedItem.id)) {
+      setSelectedItems([selectedItem.id]);
+    }
+  };
+
   return (
-    <DragDropContext onDragEnd={onDragEnd}>
+    <DragDropContext
+      onDragEnd={onDragEnd}
+      onBeforeDragStart={onBeforeDragStart}
+    >
       <Droppable droppableId={droppableId}>
         {(provided, snapshot) => (
           <div
@@ -73,10 +142,26 @@ const DragDropList = ({ initialItems, droppableId, title }) => {
                     ref={provided.innerRef}
                     {...provided.draggableProps}
                     {...provided.dragHandleProps}
-                    style={getItemStyle(
-                      snapshot.isDragging,
-                      provided.draggableProps.style
-                    )}
+                    style={{
+                      ...getItemStyle(
+                        snapshot.isDragging,
+                        provided.draggableProps.style
+                      ),
+                      background: selectedItems.includes(item.id)
+                        ? "lightgreen"
+                        : "grey",
+                    }}
+                    onClick={(event) => {
+                      //ctrl이나 cmd 클릭일경우 selectionGroupHandler()
+                      if (event.ctrlKey || event.metaKey) {
+                        selectionGroupHandler(item.id);
+                      } else if (event.shiftKey) {
+                        // shift키를 눌렀으면 selectionMultiHandler()
+                        selectionMultiHandler(item.id);
+                      } else {
+                        selectionHandler(item.id);
+                      }
+                    }}
                   >
                     {item.content}
                   </div>
