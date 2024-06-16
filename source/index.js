@@ -86,3 +86,9 @@ const getListStyle = (isDraggingOver) => ({
 });
 
 ReactDOM.render(<App />, document.getElementById("root"));
+const Container = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: red;
+`;
