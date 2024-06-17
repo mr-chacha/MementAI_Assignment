@@ -85,32 +85,34 @@ const DragDropList = ({ initialItems, droppableId, title }) => {
         setEvennumber(false);
         return;
       }
-      const dragItemId = update.draggableId;
+      const draggableId = update.draggableId;
       const destinationIndex = update.destination.index;
 
       // 지나간 아이템의 콘텐츠 값 찾기
-      const passedItemId =
+      const destinationId =
         update.source.droppableId === update.destination.droppableId
           ? items[destinationIndex].id
-          : items.find((item) => item.id === dragItemId).id;
+          : items.find((item) => item.id === draggableId).id;
 
-      const passedItem = items.find((item) => item.id === passedItemId).content;
+      const destinationItem = items.find(
+        (item) => item.id === destinationId
+      ).content;
 
-      const dragNum = Number(dragItemId.replace("item-", ""));
-      const nextNum = Number(passedItem.replace("item", ""));
+      const draggableNum = Number(draggableId.replace("item-", ""));
+      const destinationNum = Number(destinationItem.replace("item", ""));
 
       // 드래그 중인 아이템의 배열 번호
       const dragItemIndex = update.source.index;
 
       // 지나간 아이템의 배열 번호
-      const copyItems2 = [...items];
-      const [removed] = copyItems2.splice(dragItemIndex, 1);
-      copyItems2.splice(destinationIndex, 0, removed);
+      const copyItems = [...items];
+      const [removed] = copyItems.splice(dragItemIndex, 1);
+      copyItems.splice(destinationIndex, 0, removed);
 
       //드래그한 아이템의 인덱스 번호가 지나친 인덱스의 번호보다 클때만 동작
       if (dragItemIndex > destinationIndex) {
         //드래그한 아이템과 지나쳐간 아이템의 콘텐츠 번호가 짝수일때만 true
-        if (dragNum % 2 === 0 && nextNum % 2 === 0) {
+        if (draggableNum % 2 === 0 && destinationNum % 2 === 0) {
           setEvennumber(true);
         } else {
           setEvennumber(false);
