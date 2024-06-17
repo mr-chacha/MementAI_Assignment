@@ -36,13 +36,30 @@ const DragDropList = ({ initialItems, droppableId, title }) => {
   const [selectedItems, setSelectedItems] = useState([]);
   // 마지막으로 선택된 아이템의 인덱스
   const [lastSelectedIndex, setLastSelectedIndex] = useState(null);
+  // 짝수인지 아닌지
+  const [evennumber, setEvennumber] = useState(false);
 
-  // 드래그를 놓으면 호출됨
+  // 드래그시작할때 호출
+  const onBeforeDragStart = (start) => {
+    //드래그를 시작할때 item의 정보
+    const selectedItem = items[start.source.index];
+    if (!selectedItems.includes(selectedItem.id)) {
+      setSelectedItems([selectedItem.id]);
+    }
+  };
+
+  // 드래그를 놓을때 호출
   const onDragEnd = useCallback(
     (result) => {
       if (!result.destination) {
         return;
       }
+
+      if (evennumber) {
+        setEvennumber(false);
+        return;
+      }
+
       const destinationIndex = result.destination.index;
 
       const selectedIndices = selectedItems
@@ -58,7 +75,49 @@ const DragDropList = ({ initialItems, droppableId, title }) => {
       newItems.splice(destinationIndex, 0, ...movingItems);
       setItems(newItems);
     },
-    [items, selectedItems]
+    [items, selectedItems, evennumber, setEvennumber]
+  );
+
+  // 드래그 중일때 호출
+  const onDragUpdate = useCallback(
+    (update) => {
+      if (!update.destination) {
+        setEvennumber(false);
+        return;
+      }
+      const dragItemId = update.draggableId;
+      const destinationIndex = update.destination.index;
+
+      // 지나간 아이템의 콘텐츠 값 찾기
+      const passedItemId =
+        update.source.droppableId === update.destination.droppableId
+          ? items[destinationIndex].id
+          : items.find((item) => item.id === dragItemId).id;
+
+      const passedItem = items.find((item) => item.id === passedItemId).content;
+
+      const dragNum = Number(dragItemId.replace("item-", ""));
+      const nextNum = Number(passedItem.replace("item", ""));
+
+      // 드래그 중인 아이템의 배열 번호
+      const dragItemIndex = update.source.index;
+
+      // 지나간 아이템의 배열 번호
+      const copyItems2 = [...items];
+      const [removed] = copyItems2.splice(dragItemIndex, 1);
+      copyItems2.splice(destinationIndex, 0, removed);
+
+      //드래그한 아이템의 인덱스 번호가 지나친 인덱스의 번호보다 클때만 동작
+      if (dragItemIndex > destinationIndex) {
+        //드래그한 아이템과 지나쳐간 아이템의 콘텐츠 번호가 짝수일때만 true
+        if (dragNum % 2 === 0 && nextNum % 2 === 0) {
+          setEvennumber(true);
+        } else {
+          setEvennumber(false);
+        }
+      }
+    },
+    [items]
   );
 
   // 아이템 선택 함수
@@ -113,19 +172,11 @@ const DragDropList = ({ initialItems, droppableId, title }) => {
     [items, lastSelectedIndex]
   );
 
-  // 드래그시작할때
-  const onBeforeDragStart = (start) => {
-    //드래그를 시작할때 item의 정보
-    const selectedItem = items[start.source.index];
-    if (!selectedItems.includes(selectedItem.id)) {
-      setSelectedItems([selectedItem.id]);
-    }
-  };
-
   return (
     <DragDropContext
       onDragEnd={onDragEnd}
       onBeforeDragStart={onBeforeDragStart}
+      onDragUpdate={onDragUpdate}
     >
       <Droppable droppableId={droppableId}>
         {(provided, snapshot) => (
@@ -148,7 +199,9 @@ const DragDropList = ({ initialItems, droppableId, title }) => {
                         provided.draggableProps.style
                       ),
                       background: selectedItems.includes(item.id)
-                        ? "lightgreen"
+                        ? evennumber
+                          ? "red"
+                          : "lightgreen"
                         : "grey",
                     }}
                     onClick={(event) => {
