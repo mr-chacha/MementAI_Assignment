@@ -1,3 +1,9 @@
+# 실행 명령어
+- npm install : 설치 -> node_modules 폴더생성
+- npm start : 개발모드 -> http://localhost:8080
+- npm run build : 배포 테스트 -> build 폴더생성
+- serve build : npm serve를 사용하여 실제 배포 환경에서 테스트 ->http://localhost:3000
+
 # Dnd 기능구현
 - ctrl, cmd 키보드 누른후 아이템 멀티 선택가능
 - shift 키보드 누른후 아이템 멀티 선택가능
