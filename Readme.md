@@ -4,7 +4,7 @@
 - npm run build : 배포 테스트 -> build 폴더생성
 - serve build : npm serve를 사용하여 실제 배포 환경에서 테스트 ->http://localhost:3000
 
-# 2. 예외처리 및 과제목표 
+# 2. 웹팩 설정 및 기능구현
 - Webpack 적용 : Webpack을 직접 설정하여 React 애플리케이션을 구성
 - 칼럼 확장 : 기존의 한 칼럼에서 네 개의 칼럼으로 확장
 - 멀티 드래그 기능 구현 : ctrl, cmd, shift 키보드 누른후 드래그시 멀티 드래그 가능
@@ -30,11 +30,6 @@
 
 # 6. WebPack 및 styled components 설치 및 설정
 - index.html, index.js 파일을 source 폴더아래두기
-- npm install react react-dom
-- npm install --save-dev webpack webpack-dev-server webpack-cli html-webpack-plugin
-- npm install --save-dev babel-loader @babel/core @babel/preset-env @babel/preset-react
-- npm install styled-components
-- npm install --save-dev babel-plugin-styled-components
 
  
 # 7. package.json 스크립트 수정
